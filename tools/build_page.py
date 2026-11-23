@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0
 # Copyright (C) 2026 heavydms. See LICENSE.
-"""Build the preview page for docs/bambu-bus-reference.md (pandoc fragment + designed shell)."""
+"""Build a standalone HTML page from README.md (pandoc fragment + designed shell). Usage: build_page.py README.md out.html"""
 import re, subprocess, sys, html
 
 SRC, OUT = sys.argv[1], sys.argv[2]
@@ -23,7 +23,7 @@ frag = re.sub(r"\[Measured\]", '<span class="tag tag-measured"><b>Measured</b></
 # New badges
 frag = frag.replace("<strong>New</strong>", '<span class="new">New</span>')
 # links to repo-only files -> plain names
-frag = re.sub(r'<a href="(?!https?:|#|buffer_load_unload)([^"]+)">(.*?)</a>', r'<span class="repo">\2</span>', frag)
+frag = re.sub(r'<a href="(?!https?:|#|charts/|img/|buffer_load_unload)([^"]+)">(.*?)</a>', r'<span class="repo">\2</span>', frag)
 # wide tables scroll in their own box
 frag = re.sub(r"<table>", '<div class="tablewrap"><table>', frag).replace("</table>", "</table></div>")
 
@@ -34,7 +34,6 @@ for hid, title in re.findall(r'<h2 id="([^"]+)">(.*?)</h2>', frag):
 toc_html = "\n".join(toc)
 
 page = f"""<title>Bambu Bus Reference</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@500;600&display=swap">
 <style>

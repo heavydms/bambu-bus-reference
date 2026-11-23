@@ -4,7 +4,7 @@ One place for what is known about the RS-485 bus between a Bambu Lab printer and
 X2D + AMS 2 Pro as the measured case and notes on what applies to other models. Written for people building
 their own AMS-compatible hardware or bus tools.
 
-Compiled from the author's dated capture log, bench notes and source log (kept private because they hold
+Based on the author's own captures and bench work (raw captures are not published because they contain
 device identifiers), plus the frame parser in [`firmware/bus_parse/bus_parse.ino`](firmware/bus_parse/bus_parse.ino).
 
 ### Repository contents
@@ -39,7 +39,7 @@ modified; see [NOTICE](NOTICE).
   Bambu can change any of it with a firmware update. Items marked **?** are open.
 - **Use at your own risk.** Wiring into the bus can damage the printer, the AMS or your own hardware (pin 1
   carries 24 V on the printer side). Power everything off before plugging or unplugging a bus connector.
-- **Do not use this to defeat Bambu's authentication.** The bus carries a certificate and signed-challenge
+- **This is not a guide to defeating Bambu's authentication.** The bus carries a certificate and signed-challenge
   exchange (0x040D/0x040E). This document describes that it exists and when it runs. It contains no keys, no
   certificate data and no method to bypass it, and none should be added.
 - Device serial numbers, the ASCII device ID carried in short 0x05 frames, tag UIDs and tray UIDs were seen
@@ -49,7 +49,7 @@ modified; see [NOTICE](NOTICE).
 
 | Device | Versions | When |
 |---|---|---|
-| X2D printer | Firmware before 2026-11-21 (version not recorded in the notes); downgraded to **01.01.00.00** on 2026-11-21; later upgraded back to its latest firmware (version not recorded) | Captures 2026-11-20 to 2026-11-23 |
+| X2D printer | Firmware before 2026-11-21 (earlier version; exact number unknown); downgraded to **01.01.00.00** on 2026-11-21; later upgraded back to its latest firmware (exact number unknown) | Captures 2026-11-20 to 2026-11-23 |
 | AMS 2 Pro (x2) | **05.00.22.19** (as found) -> **04.00.21.90** (reflashed by the printer during the downgrade) -> **05.00.22.19** (reflashed on the upgrade back). AMS loader "Version: 23" | Same |
 | Other AMS 2 Pro versions, published only | 03.00.21.29, 04.00.21.87, 05.00.22.22 [Published: [OpenAMS][openams] `cortex_bridge/ams_firmware.json`] | Not run here |
 
@@ -57,12 +57,11 @@ modified; see [NOTICE](NOTICE).
 
 Every claim carries a tag:
 
-- **[Published: source]**: a published source states it (prior-art.md (the author's source log) records which).
+- **[Published: source]**: a published source states it (section 12 lists them).
 - **[Measured: date]**: comes only from our own captures on the X2D + AMS 2 Pro.
 - Both tags: we confirmed a published claim on our hardware.
 - **New**: not found in any published source in a targeted search on 2026-11-23 (Bambu wiki, GitHub
-  including every Bambu-Bus issue, Bambu forum, Reddit; see the "Novelty search" entry in
-  prior-art.md (the author's source log)). That is absence of evidence, not proof; corrections welcome.
+  including every Bambu-Bus issue, Bambu forum, Reddit). That is absence of evidence, not proof; corrections welcome.
 - Figures are rendered from real captures by [tools/figs/mkfigs.py](tools/mkfigs.py).
 
 Link targets for the short source names are in [section 12](#12-sources).
@@ -84,7 +83,7 @@ Link targets for the short source names are in [section 12](#12-sources).
 | Poll cycle | ~5 ms; ~179-183 frames/s printer->AMS, ~17-26 frames/s AMS->printer at idle | [Measured: 2026-11-20/21/23] |
 | Bridge latency | Cut-through forwarding, first byte in -> first byte out **median ~101 us** (both directions, 90-132 us) | [Measured: 2026-11-23] |
 | AMS reply turnaround | 0.18-2.28 ms after the request ends (longest normal reply ~1.55 ms) | [Measured: 2026-11-20] |
-| Reply deadline | **Not measured** | gap |
+| Reply deadline | **Not measured** | Open question (section 11) |
 | AMS bus address | 0x0007 (one address for both daisy-chained AMS units) | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-21] |
 | Printer addresses | 0x0003 motion controller, 0x0006 AP, 0x0009 AP2 / updater, 0x000A authenticator | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-21] |
 | Buffer signal | Cable pins 5/6: **complementary 10 kHz PWM, duty = filament buffer position**, not RS-485 | [Measured: 2026-11-21, 2026-11-23] **New** |
@@ -217,7 +216,7 @@ In this document short payloads are written starting at the type byte, e.g. `03 
 |---|---|---|
 | 0 | `0x3D` | [Published: [Bambu-Bus][bb]] |
 | 1 | Flags; **bit 7 = 0** marks a long frame (seen: `00`, `05`) | [Published: [Bambu-Bus][bb]] [Measured] |
-| 2-3 | Not decoded in our notes (seen `C2 0F` on a firmware frame, `00 00` on 0x02EE) **?** | [Measured: 2026-11-21] |
+| 2-3 | Not decoded (seen `C2 0F` on a firmware frame, `00 00` on 0x02EE) **?** | [Measured: 2026-11-21] |
 | 4-5 | **Total length, 16-bit little-endian** (`C9 01` = 457) | [Measured: 2026-11-21] |
 | 6 | **CRC8** over bytes 0-5 | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-23, 281/281 long frames] |
 | 7-8 | **Target address** | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-21] |
@@ -230,8 +229,8 @@ Example (printer to the 0x02EE broadcast target, as decoded from a single-ended 
 `3D 05 00 00 10 00 13 00 0F 00 03 EE 02 00 23 0E` (length 0x0010 = 16 B) [Measured: 2026-11-22].
 
 **Address byte order caveat.** Bytes 7-10 hold the address high byte first (`00 0F`, `00 03`). Our firmware
-reads them little-endian, so the same address prints as 0x0F00 / 0x0300 in raw logs, and early notes wrote
-"target 0x0700" (AMS), "0x0A00" and "0x2500". This document uses the `0x00NN` form (0x0007, 0x000A, 0x0025)
+reads them little-endian, so the same address prints as 0x0F00 / 0x0300 in raw logs, and some write-ups give
+the same addresses as 0x0700 (AMS), 0x0A00 and 0x2500. This document uses the `0x00NN` form (0x0007, 0x000A, 0x0025)
 throughout [Measured: 2026-11-20/22]. The BMCU firmware uses 0x0700 + 0x0801*n for AMS units, in the other
 form [Published: [BMCU-C-PJARCZAK][bmcu]].
 
@@ -285,8 +284,8 @@ Short 0xA0 polls also carry a one-byte id: 0x00, 0x27, 0x28 (section 6.1) [Measu
   AMS 1 / AMS 2 Pro, 0xFE for AMS HT); the master offers an index (0-3; HT 0x80-0x87); an AMS 2 Pro keeps
   its index through power cycles [Published: [OpenAMS][openams]]. Not seen on our captures (we never caught a
   fresh discovery) **?**
-- The unsourced "AMS deep dive" claim that AMS units sit at 0x0700-0x0703, assigned dynamically, is
-  **not supported** by our captures (only 0x0007 seen) **New** (see section 11.2).
+- Some unsourced summaries online say AMS units sit at 0x0700-0x0703, assigned dynamically. These captures
+  only ever show 0x0007 (see section 11.3).
 
 **Bus legs:** the exhaust fan and the track switch sat on the printer's side of our bench cut. We saw the
 printer's frames to them (and their auth) but not always their replies [Measured: 2026-11-21, 2026-11-23].
@@ -313,7 +312,7 @@ set or one source, **L** = seen, meaning unknown.
 | 0x03 | P->A, echoed/answered A->P | 12 B -> 44 B | **Motion command** for one AMS: `03 [ams_id] [en | mode<<1] [idx] [ref] [?]` (section 6.3) | H | [Published: [Bambu-Bus][bb], [BMCU][bmcu]] [Measured: 2026-11-21] |
 | 0x04 | P->A -> A->P | 13 B -> 60 B | **Motion/status poll**: `04 00 [en | mode<<1] [ref] 03 [idx]`. Idle `04 00 01 00 03 FF`, hold `04 00 07 7F 03 01`. The 60 B reply is AMS status; a few count/flag bytes change **?** | H (request), L (reply) | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-21] |
 | 0x04 reply offsets 22-33 | A->P | | Motor samples: hub motor 22-27, per-slot first stage 28/30/32 on an AMS 2 Pro | M | [Published: [OpenAMS][openams]] (not checked by us) |
-| 0x05 | P->A, answered | 31 B | Online/identity exchange ("online" in the Bambu-Bus map). Alternates between all zeros and a frame carrying **an ASCII device ID** (not recorded) | M | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-20/21] |
+| 0x05 | P->A, answered | 31 B | Online/identity exchange ("online" in the Bambu-Bus map). Alternates between all zeros and a frame carrying **an ASCII device ID** (omitted here) | M | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-20/21] |
 | 0x06 | P->A -> A->P | 12 B -> 60 B | Request type 6; rose from 1 to 78 pairs/min during spool initialization **?** | L | [Measured: 2026-11-20] |
 | 0x07 | P->A, echoed | 13 B | `07 [ams_id] 00 [flag]`; flag `00` when a spool starts being pulled, `01` after a spool is inserted. Bambu-Bus: "read NFC info". **No tag data crosses the bus** | M | [Published: [Bambu-Bus][bb]] [Measured: 2026-11-21] |
 | 0x08 | P->A | >= 45 B | Older set-filament-info form: byte 5 = `ams<<4 | tray`, id at +7, RGBA at +15, temps at +19/+21, name at +23. **Not seen on the X2D** | M | [Published: [BMCU][bmcu]] |
@@ -422,7 +421,7 @@ tagged Bambu PLA Basic; B3 = no tag, set from the screen [Measured: 2026-11-21]
 |---|---|---|---|---|---|
 | 0 | 1 | `01` | `01` | AMS id | [Published: BMCU] [Measured] |
 | 1 | 1 | `00` | `02` | tray | [Published: BMCU] [Measured] |
-| 2-10 | 9 | `00` + tag UID (8 B, pattern `<UID> 00 00 01 00`; not recorded) | zeros | block 0 (UID); MQTT `tag_uid` = offsets 3-10 | [Published: [RFID guide][rfid], [Grumpy Developer][grumpy]] [Measured] |
+| 2-10 | 9 | `00` + tag UID (8 B, pattern `<UID> 00 00 01 00`; omitted here) | zeros | block 0 (UID); MQTT `tag_uid` = offsets 3-10 | [Published: [RFID guide][rfid], [Grumpy Developer][grumpy]] [Measured] |
 | 11-18 | 8 | `A00-W01` | zeros | block 1: material variant id | [Published: [RFID guide][rfid]] [Measured] |
 | 19-26 | 8 | `GFA00` | `GFG99` | block 1: material **family** id | [Published: BMCU, [RFID guide][rfid]] [Measured] |
 | 27-42 | 16 | `PLA` | `PETG` | block 2: filament type | [Published: BMCU] [Measured] |
@@ -434,7 +433,7 @@ tagged Bambu PLA Basic; B3 = no tag, set from the screen [Measured: 2026-11-21]
 | 75-78 | 4 | zeros | zeros | block 6: bed temp type, bed temp | [Published: [RFID guide][rfid]] [Measured] |
 | 79-82 | 4 | 230, 190 | 270, 220 | block 6: hotend max, min (deg C) | [Published: BMCU] [Measured] |
 | 83-94 | 12 | `34 21 88 13 F4 01 E8 03 00 00 00 3F` | zeros | block 8: X-cam info + float 0.5 **?** (published `xcam_info` samples share elements but don't line up byte for byte) | [Published: [Grumpy Developer][grumpy]] [Measured] |
-| 95-110 | 16 | tray UID (not recorded) | zeros | block 9; MQTT `tray_uuid` (32 hex) | [Published: [Grumpy Developer][grumpy]] [Measured] |
+| 95-110 | 16 | tray UID (omitted here) | zeros | block 9; MQTT `tray_uuid` (32 hex) | [Published: [Grumpy Developer][grumpy]] [Measured] |
 | 111-113 | 3 | `02 00 01` | `00 00 01` | byte 113 = 1 in both: "info valid"? **?** | [Measured: 2026-11-21] |
 | 128-131 | 4 | `AC 03` = 940, `72 06` = 1650 | | **?** maybe filament length / remaining | [Measured: 2026-11-21] |
 
@@ -681,7 +680,7 @@ replies with 0x0106 and reports progress as `[MCU_UP]` text in **0x0209**. Byte 
 - With the track switch fitted, the X2D refuses to load from the external spool ("The Filament Track Switch
   and external spool cannot be used together") [Measured: 2026-11-21] [Published: [BamDude][bamdude-code]].
 - Track switch hardware: 2 in / 2 out, a solenoid-thrown blade per inlet with a position sensor, two Bambu
-  Bus 6-pin cables [Published: Bambu wiki FS01 teardown guide, URL not recorded]. Over MQTT it appears as
+  Bus 6-pin cables [Published: [Bambu wiki FS01 guide][fs01]]. Over MQTT it appears as
   `print.device.fila_switch` / `print.aux` bit 29 [Published: [Bambuddy][bambuddy], [BamDude][bamdude-code]].
 - The TPU Feed Assist Module on an AMS port never transmits; the printer's unanswered 0x0103 queries to
   0x0F01 and 0x000E continue [Measured: 2026-11-21].
@@ -922,15 +921,15 @@ Stated as observed and published. This document gives no way around any of it.
 
 ### 11.3 Claims contradicted by our captures
 
-A widely pasted, **unsourced** "AMS deep dive" overview (no author, no links) disagrees with the captures in
-several places. Do not cite it [Measured: 2026-11-21] **New**
+An unsourced "AMS deep dive" summary circulates online (no author, no links). Several of its claims don't
+match these captures [Measured: 2026-11-21]:
 
 | Claim | What the captures show |
 |---|---|
 | Short 0x20 is a poll and the AMS replies with slot bits, odometer and buffer reading | On the X2D, 0x20 is a 41-byte all-zero P->A frame; 0 A->P 0x20 frames in the full log |
 | Short 0x07 energizes a coil and the AMS streams raw tag blocks | 0x07 is 13 bytes (`07 <ams> 00 <flag>`), echoed; no tag data crosses the bus |
 | The AMS forwards raw tag blocks and the **printer** checks the RSA signature | The AMS checks the tag itself (`stop goto auth` -> `auth ok`); the printer reads only the decoded 0x0211 record |
-| The buffer is a linear Hall sensor read by the AMS | On the AMS 2 Pro + X2D the buffer position arrives as a 10 kHz complementary PWM on cable pins 5/6 from the printer side |
+| The buffer is a linear Hall sensor read by the AMS | Partly right: the buffer does use a Hall sensor (Bambu wiki), but on the X2D it is the printer's built-in buffer, and its position reaches the AMS as a 10 kHz complementary PWM on cable pins 5/6 |
 | AMS units at 0x0700-0x0703, assigned dynamically | Only 0x0007 seen; AMS #2 answers through #1 |
 | RSA signature in tag sectors 10-13 | The RFID-Tag-Guide says sectors 10-15 [Published: [RFID-Tag-Guide][rfid]] |
 
@@ -941,7 +940,7 @@ the X2D lockout from 01.01.00.00 (its "hardware secure element" is unsourced).
 
 ## 12. Sources
 
-Published sources used (verdicts in prior-art.md (the author's source log)):
+Published sources used:
 
 | Short name | Link | Used for |
 |---|---|---|
@@ -956,12 +955,12 @@ Published sources used (verdicts in prior-art.md (the author's source log)):
 | OpenAMS Cortex Bridge | [openams.si-forge.com/en/0ams][cortex] | Bus front-end parts |
 | Bambu wiki, power | [AMS power on failure][wikipwr] | Pin diagram (plug face), 24 V over the bus on X1/P1 |
 | Bambu wiki, HMS | [HMS 0700-5000-0002-0001][wikihms] | Ohmmeter health check, no terminator |
-| Bambu wiki, buffer | "Filament buffer position signal lost" troubleshooting page (wiki.bambulab.com; exact URL not recorded) [wikibuf] | Buffer_A/Buffer_B names and voltages, HMS 0700-4000-0002-0001 |
+| Bambu wiki, buffer | [HMS 0700-4000-0002-0001: filament buffer signal lost][wikibuf] | Buffer_A/Buffer_B names and voltages, HMS 0700-4000-0002-0001 |
 | Bambu wiki, AMS 2 Pro guide | [AMS 2 Pro Part Introduction and Connection Guide][wikiams2] (last edited 2026-07-09) | Buffer = slider + spring + Hall sensor, signal to AMS and printer, closed-loop feed concept, H2D built-in buffer, new 6-pin cable |
 | Bambu-Bus issue #12 | [X2D <-> AMS 2 Pro capture][bb12] | X2D baud observation; a request for X2D handshake/auth/load captures (none public as of 2026-11-23) |
 | Bambu wiki, TPU Feed Assist | [TPU Feed Assist Module][tpuwiki] | Buttons-only control, port power |
-| Bambu wiki, FS01 teardown | "Filament Track Switch Disassembly and Troubleshooting Guide" (URL not recorded) | Track switch hardware |
-| Dr Terrible | "Bambu X1 carbon notes", Dr Terrible's House of Bloggable (WordPress; URL not recorded) [drt] | X1 port pinout, pair A/B roles, TP75176E |
+| Bambu wiki, FS01 teardown | [Filament Track Switch Disassembly and Troubleshooting Guide][fs01] | Track switch hardware |
+| Dr Terrible | ["Bambu X1 carbon notes", Dr Terrible's House of Bloggable][drt] | X1 port pinout, pair A/B roles, TP75176E |
 | AMCU-ALL-v2 / fake-ams-lite | [oshwhub AMCU-ALL-v2][amcuall], [funTechCn/fake-ams-lite][fakelite] | Bus front end, A1 4-pin connector |
 | druckgott | [druckgott/bambulab_ams_diy_esp32][druckgott] | Early fake-AMS read (addresses, early pinout, later corrected) |
 | BamDude | [docs: filament families][bamdude], [kainpl/bamdude][bamdude-code] | MQTT slot setting, family vs preset, tray bits, FTS behavior, PSU HMS codes |
@@ -972,7 +971,7 @@ Published sources used (verdicts in prior-art.md (the author's source log)):
 | wanzii BMCU wiki | [bmcu.wanzii.cn][wanzii] | Last BMCU-compatible versions |
 | BTT Panda BMCU370 | [BTT wiki][bttbmcu] | Supported printers |
 
-Not used as a source: the pasted "AMS deep dive" summary (unsourced; see 11.3).
+An unsourced "AMS deep dive" summary that circulates online was not used as a source (see 11.3).
 
 [bb]: https://github.com/Bambu-Research-Group/Bambu-Bus
 [bbcpp]: https://github.com/Bambu-Research-Group/Bambu-Bus/blob/main/AMCU/AMCU-v2/src/BambuBus.cpp
@@ -986,9 +985,9 @@ Not used as a source: the pasted "AMS deep dive" summary (unsourced; see 11.3).
 [cortex]: https://openams.si-forge.com/en/0ams
 [wikipwr]: https://wiki.bambulab.com/en/x1/troubleshooting/ams-power-failure
 [wikihms]: https://wiki.bambulab.com/en/x1/troubleshooting/hmscode/troubleshooting
-[wikibuf]: https://wiki.bambulab.com/
+[wikibuf]: https://wiki.bambulab.com/en/x1/troubleshooting/hmscode/0700_4000_0002_0001
 [tpuwiki]: https://wiki.bambulab.com/en/general/manual/tpu-feed-assist-module
-[drt]: #12-sources
+[drt]: https://charliex2.wordpress.com/2023/01/07/bambu-x1-carbon-notes/
 [amcuall]: https://oshwhub.com/jyhln/amcu-all-v2
 [fakelite]: https://github.com/funTechCn/fake-ams-lite
 [druckgott]: https://github.com/druckgott/bambulab_ams_diy_esp32
@@ -1002,3 +1001,4 @@ Not used as a source: the pasted "AMS deep dive" summary (unsourced; see 11.3).
 [bttbmcu]: https://neo.bttwiki.com/en/docs/panda-series/module/panda-bmcu370/
 [wikiams2]: https://wiki.bambulab.com/en/ams-2-pro/manual/intro-and-connection-guide
 [bb12]: https://github.com/Bambu-Research-Group/Bambu-Bus/issues/12
+[fs01]: https://wiki.bambulab.com/en/general/troubleshooting/filament-track-switch

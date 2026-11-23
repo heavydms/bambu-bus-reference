@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0
+# Copyright (C) 2026 heavydms. See LICENSE.
 # Raw capture on the Uno Q from ONE FX2 analyzer, picked by its fixed USB hub-port path.
 # Captures compressed .sr chunks only -- decode AFTERWARD (live sigrok UART decoding is too slow on the
 # Uno Q's CPU and makes the FX2 overrun). Tested 2026-11-22:

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0
+# Copyright (C) 2026 heavydms. See LICENSE.
 # Merged two-board bench logger for the Arduino Uno Q (or any host). Reads both XIAO S3 bridges' USB-CDC
 # logs, timestamps and tags each line ([A]/[B]), and writes ONE merged map.log so the two bus legs line up.
 # The boards share a D7 sync wire, so 'm' sent to board A stamps a MARK in BOTH logs at once.

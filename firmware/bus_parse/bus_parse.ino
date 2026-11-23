@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0
+// Copyright (C) 2026 heavydms. Contains framing/CRC/type-map code ported from
+// Bambu-Research-Group/Bambu-Bus AMCU-v2 (GPL-3.0); modified by heavydms in 2026. See NOTICE.
+//
 // Interposer rung 2 - transparent bridge + live frame parser for the ESP32-S3.
 // Spec, wiring and validation: README.md (sections 3, 10).
 //

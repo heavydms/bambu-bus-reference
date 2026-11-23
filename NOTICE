@@ -1,0 +1,24 @@
+bambu-bus-reference
+Copyright (C) 2026 heavydms
+
+This repository is not affiliated with or endorsed by Bambu Lab.
+
+Licensing
+---------
+- Code: everything under firmware/ and tools/ is licensed under the GNU General Public
+  License, version 3 (GPL-3.0). See LICENSE.
+- Documentation and figures: README.md, img/ and charts/ are licensed under the Creative
+  Commons Attribution 4.0 International License (CC BY 4.0). See LICENSE-docs.
+  Attribution: "bambu-bus-reference by heavydms", with a link to this repository.
+
+Third-party code
+----------------
+firmware/bus_parse/bus_parse.ino contains frame-parsing, CRC and type-map code ported from
+the AMCU-v2 firmware in Bambu-Research-Group/Bambu-Bus
+(https://github.com/Bambu-Research-Group/Bambu-Bus), which is licensed under GPL-3.0
+(AMCU by 4016N and the Bambu-Bus contributors). It was modified by heavydms in 2026:
+adapted to two UARTs as a transparent bridge, 16-bit long-frame lengths, change tracking,
+logging, the buffer tap and the sync marker.
+
+Protocol facts (baud rate, frame layout, CRC parameters, message types) are cited in
+README.md with their sources.

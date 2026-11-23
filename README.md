@@ -12,6 +12,7 @@ device identifiers), plus the frame parser in [`firmware/bus_parse/bus_parse.ino
 | Path | What it is |
 |---|---|
 | `README.md` | This reference |
+| `LICENSE`, `LICENSE-docs`, `NOTICE` | GPL-3.0 for code, CC BY 4.0 for docs and figures, third-party credit |
 | `img/` | Figures rendered from real logic-analyzer and log captures |
 | `charts/buffer_load_unload_2026-11-23.html` | Interactive buffer-duty chart (download and open in a browser) |
 | `firmware/bus_parse/bus_parse.ino` | ESP32-S3 (XIAO) transparent RS-485 bridge + live frame parser used for every capture here |
@@ -22,9 +23,11 @@ device identifiers), plus the frame parser in [`firmware/bus_parse/bus_parse.ino
 
 Raw captures are not included: they contain the AMS's ASCII device ID and certificate bytes.
 
-**License: not chosen yet.** Part of the frame parser in `bus_parse.ino` is ported from
-[Bambu-Research-Group/Bambu-Bus](https://github.com/Bambu-Research-Group/Bambu-Bus) AMCU-v2, whose license
-must be confirmed before this repository is made public.
+**License.** Code (`firmware/`, `tools/`) is GPL-3.0 ([LICENSE](LICENSE)). This README, the figures and the
+chart (`README.md`, `img/`, `charts/`) are CC BY 4.0 ([LICENSE-docs](LICENSE-docs)): reuse them freely, crediting
+"bambu-bus-reference by heavydms" with a link here. The frame parser in `bus_parse.ino` is ported from
+[Bambu-Research-Group/Bambu-Bus](https://github.com/Bambu-Research-Group/Bambu-Bus) AMCU-v2 (GPL-3.0) and
+modified; see [NOTICE](NOTICE).
 
 ## 1. Disclaimer
 

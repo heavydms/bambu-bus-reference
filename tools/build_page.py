@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0
+# Copyright (C) 2026 heavydms. See LICENSE.
 """Build the preview page for docs/bambu-bus-reference.md (pandoc fragment + designed shell)."""
 import re, subprocess, sys, html
 

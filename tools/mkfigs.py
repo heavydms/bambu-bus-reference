@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0
+# Copyright (C) 2026 heavydms. See LICENSE.
 """Render the bus-reference figures from real captures (tpu-autofeeder bench, 2026-11-23)."""
 import json, re, sys, os
 import numpy as np
